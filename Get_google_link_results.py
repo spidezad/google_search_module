@@ -1,14 +1,19 @@
 '''
+
+#############################################
+
+ Module to get google search results by using Scrapy (Spider module)
+ Author: Tan Kok Hua (Guohua tan)
+ Email: spider123@gmail.com
+ Revised date: Apr 05 2014
+
+##############################################
+
     Scrapy Spider Module to
     1) Scrape the google link results from the google search page
     2) Scrape the individual links for the title and description.
 
- sel.xpath('//title').extract()
- sel.xpath('/html/head/meta[@name="description"]/@content').extract()
-
 '''
-
-
 
 import re
 import os
@@ -45,13 +50,6 @@ class GoogleSearch(Spider):
                if type of parse == google_search --> get list of links from google results
                if type of parse == general --> get the meta information for each site
         '''
-
-##        print 
-##        filename = response.url.split("/")[-2]
-##        open(filename, 'wb').write(response.body)
-##        print filename
-##        #how to parse from file instead of website
-
 
         if self.setting_data['type_of_parse'] == 'google_search':
             print

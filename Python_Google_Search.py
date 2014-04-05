@@ -1,6 +1,12 @@
 '''
-Module to get google search results by using Scrapy
+#############################################
 
+ Module to get google search results by using Scrapy
+ Author: Tan Kok Hua (Guohua tan)
+ Email: spider123@gmail.com
+ Revised date: Apr 05 2014
+
+##############################################
 
 Usage:
     Retrieve the google results links from google search site using Scrapy
@@ -193,56 +199,55 @@ class gsearch_url_form_class(object):
         return setting_data
 
 if __name__ == '__main__':
-    '''Can try the choice as a list'''
-    choice =6
 
-    if choice ==6:
-        '''
-            Running the google search
+    '''
+        Running the google search
 
-        '''
-        ## Parameters setting
-        search_words = 'Hello Pandas'  
-        GS_LINK_JSON_FILE = r'C:\data\temp\output' #must be same as the get_google_link_results.py
-
-        # spider store location, depend on user input
-        spider_file_path = r'C:\pythonuserfiles\google_search_module'
-        spider_filename = 'Get_google_link_results.py'
-
-        ## Google site link scrape
-        print 'Get the google search results links'
-        hh = gsearch_url_form_class(search_words)
-        hh.data_format_switch = 1
-        hh.formed_search_url()
-        ## Set the setting for json
-        temp_data_for_store = hh.prepare_data_for_json_store()
-        hh.set_setting_to_json_file(temp_data_for_store)
-
-        new_project_cmd = 'scrapy settings -s DEPTH_LIMIT=1 & cd "%s" & scrapy runspider %s' %(spider_file_path,spider_filename)
-        os.system(new_project_cmd)
-
-        ## Scape list of results link
-        print 'Start scrape individual results'
-        data  = hh.retrieved_setting_fr_json_file(GS_LINK_JSON_FILE)
-        
-        ##check if proper url --> must at least start with http
-        url_links_fr_search = [n for n in data['output_url'] if n.startswith('http')]
-
-        ## Switch to the second seach 
-        hh.data_format_switch = 2
-
-        ## Optional limit the results displayed
-        hh.sp_search_url_list = url_links_fr_search[:10]
-
-        ## Set the setting for json
-        temp_data_for_store = hh.prepare_data_for_json_store()
-        hh.set_setting_to_json_file(temp_data_for_store)
-
-        ## Run the crawler -- and remove the pause if do not wish to see contents of the command prompt
-        new_project_cmd = 'scrapy settings -s DEPTH_LIMIT=1 & cd "%s" & scrapy runspider %s  & pause' %(spider_file_path,spider_filename)
-        os.system(new_project_cmd)
+    '''
+    print 'Start search'
     
-        print 'Completed'    
+    ## Parameters setting
+    search_words = 'Hello Pandas'  
+    GS_LINK_JSON_FILE = r'C:\data\temp\output' #must be same as the get_google_link_results.py
+
+    # spider store location, depend on user input
+    spider_file_path = r'C:\pythonuserfiles\google_search_module'
+    spider_filename = 'Get_google_link_results.py'
+
+    ## Google site link scrape
+    print 'Get the google search results links'
+    hh = gsearch_url_form_class(search_words)
+    hh.data_format_switch = 1
+    hh.formed_search_url()
+    ## Set the setting for json
+    temp_data_for_store = hh.prepare_data_for_json_store()
+    hh.set_setting_to_json_file(temp_data_for_store)
+
+    new_project_cmd = 'scrapy settings -s DEPTH_LIMIT=1 & cd "%s" & scrapy runspider %s' %(spider_file_path,spider_filename)
+    os.system(new_project_cmd)
+
+    ## Scape list of results link
+    print 'Start scrape individual results'
+    data  = hh.retrieved_setting_fr_json_file(GS_LINK_JSON_FILE)
+    
+    ##check if proper url --> must at least start with http
+    url_links_fr_search = [n for n in data['output_url'] if n.startswith('http')]
+
+    ## Switch to the second seach 
+    hh.data_format_switch = 2
+
+    ## Optional limit the results displayed
+    hh.sp_search_url_list = url_links_fr_search[:10]#keep the results to 10.Can be removed
+
+    ## Set the setting for json
+    temp_data_for_store = hh.prepare_data_for_json_store()
+    hh.set_setting_to_json_file(temp_data_for_store)
+
+    ## Run the crawler -- and remove the pause if do not wish to see contents of the command prompt
+    new_project_cmd = 'scrapy settings -s DEPTH_LIMIT=1 & cd "%s" & scrapy runspider %s  & pause' %(spider_file_path,spider_filename)
+    os.system(new_project_cmd)
+
+    print 'Completed'    
 
 
 
