@@ -4,7 +4,7 @@
  Module to get google search results by using Scrapy
  Author: Tan Kok Hua (Guohua tan)
  Email: spider123@gmail.com
- Revised date: Apr 05 2014
+ Revised date: Apr 011 2014
 
 ##############################################
 
@@ -20,6 +20,13 @@ Required Modules:
     YAML --> for the clean html, resolve unicode.
     Scrapy --> for scraping website, make use of scrapy crawler
 
+Updates:
+    Apr 11 2014: Add in users parameters
+    Apr 09 2014: Add in modify_search_key function
+
+TODO:
+    Add in advanced google search
+    http://www.johntedesco.net/blog/2012/06/21/how-to-solve-impossible-problems-daniel-russells-awesome-google-search-techniques/
 
 '''
 
@@ -123,6 +130,19 @@ class gsearch_url_form_class(object):
             modified the
         '''
 
+    def modify_search_key(self, purpose):
+        '''
+            This allow modification to the search key according to purpose
+            str purpose --> none  (set to self.g_search_key)
+            purpose: 'def' Get definition of word
+        '''
+        if purpose == 'def':
+            self.g_search_key = 'define+' + self.g_search_key
+        else:
+            print 'purpose unknown: do nothing'
+            pass ## no changes if the purpose is not defined
+
+
     def formed_search_url(self):
         '''
             Function to get the formed url for search
@@ -204,10 +224,14 @@ if __name__ == '__main__':
         Running the google search
 
     '''
+    # User options
+    BYPASS_GOOGLE_SEARCH = 1    # if this is active, bypass searching
+    NUM_RESULTS_TO_PROCESS = 10 # specify the number of results url to crawl
+
     print 'Start search'
     
     ## Parameters setting
-    search_words = 'Hello Pandas'  
+    search_words = 'best hotel to stay in tokyo'  
     GS_LINK_JSON_FILE = r'C:\data\temp\output' #must be same as the get_google_link_results.py
 
     # spider store location, depend on user input
@@ -215,16 +239,17 @@ if __name__ == '__main__':
     spider_filename = 'Get_google_link_results.py'
 
     ## Google site link scrape
-    print 'Get the google search results links'
-    hh = gsearch_url_form_class(search_words)
-    hh.data_format_switch = 1
-    hh.formed_search_url()
-    ## Set the setting for json
-    temp_data_for_store = hh.prepare_data_for_json_store()
-    hh.set_setting_to_json_file(temp_data_for_store)
+    if not BYPASS_GOOGLE_SEARCH:
+        print 'Get the google search results links'
+        hh = gsearch_url_form_class(search_words)
+        hh.data_format_switch = 1
+        hh.formed_search_url()
+        ## Set the setting for json
+        temp_data_for_store = hh.prepare_data_for_json_store()
+        hh.set_setting_to_json_file(temp_data_for_store)
 
-    new_project_cmd = 'scrapy settings -s DEPTH_LIMIT=1 & cd "%s" & scrapy runspider %s' %(spider_file_path,spider_filename)
-    os.system(new_project_cmd)
+        new_project_cmd = 'scrapy settings -s DEPTH_LIMIT=1 & cd "%s" & scrapy runspider %s' %(spider_file_path,spider_filename)
+        os.system(new_project_cmd)
 
     ## Scape list of results link
     print 'Start scrape individual results'
@@ -237,7 +262,7 @@ if __name__ == '__main__':
     hh.data_format_switch = 2
 
     ## Optional limit the results displayed
-    hh.sp_search_url_list = url_links_fr_search[:10]#keep the results to 10.Can be removed
+    hh.sp_search_url_list = url_links_fr_search[:NUM_RESULTS_TO_PROCESS]#keep the results to 10.Can be removed
 
     ## Set the setting for json
     temp_data_for_store = hh.prepare_data_for_json_store()

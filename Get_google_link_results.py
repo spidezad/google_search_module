@@ -5,13 +5,20 @@
  Module to get google search results by using Scrapy (Spider module)
  Author: Tan Kok Hua (Guohua tan)
  Email: spider123@gmail.com
- Revised date: Apr 05 2014
+ Revised date: Apr 11 2014
 
 ##############################################
 
-    Scrapy Spider Module to
+Scrapy Spider Module to
     1) Scrape the google link results from the google search page
     2) Scrape the individual links for the title and description.
+
+Updates:
+    Apr 12 2014: Resolve issues with unrecognise character
+                : Add in join_list_of_str function and remove_whitespace_fr_raw
+                : Add in paragraph process
+                : Add in option to extract text from paragraph
+
 
 '''
 
@@ -19,12 +26,17 @@ import re
 import os
 import sys
 import json
+import string
 from scrapy.spider import Spider
 from scrapy.selector import Selector
 from Python_Google_Search import gsearch_url_form_class 
 
-GS_LINK_JSON_FILE = r'C:\data\temp\output'
-RESULT_FILE = r'c:\data\temp\htmlread_1.txt'
+# Options
+GS_LINK_JSON_FILE       = r'C:\data\temp\output'
+RESULT_FILE             = r'c:\data\temp\htmlread_1.txt'
+
+ENABLE_TEXT_SUMMARIZE   = 0 # For NLTK to look into the text for details.
+ENABLE_PARAGRAPH_STORED = 1 # Store website content to file.
 
 class GoogleSearch(Spider):
 
@@ -42,6 +54,26 @@ class GoogleSearch(Spider):
     name = setting_data['Name']
     allowed_domains = setting_data['Domain']
     start_urls = setting_data['SearchUrl']
+
+    def join_list_of_str(self,list_of_str, joined_chars= '...'):
+        '''
+            Function to combine a list of str to one long str
+            list of str --> str
+
+        '''
+        return joined_chars.join([n for n in list_of_str])
+
+    def remove_whitespace_fr_raw(self,raw_input):
+        '''
+            Remove unnecessary white space such as \r,\t,\n
+            str raw_input --> str
+            
+        '''
+        
+        for n in ['\n','\t','\r']:
+            raw_input = raw_input.replace(n,'')
+        return raw_input        
+
 
     def parse(self, response):
         '''
@@ -76,9 +108,18 @@ class GoogleSearch(Spider):
 
             ## Get meta info from website
             title = sel.xpath('//title/text()').extract()
-            if len(title)>0: title = title[0]
+            if len(title)>0:
+                title = title[0].encode(errors='replace') #replace any unknown character with ?
             contents = sel.xpath('/html/head/meta[@name="description"]/@content').extract()
-            if len(contents)>0: contents = contents[0]
+            if len(contents)>0:
+                contents = contents[0].encode(errors='replace') #replace any unknown character with ?
+
+            if ENABLE_PARAGRAPH_STORED:
+                paragraph_list = sel.xpath('//p/text()').extract()
+                para_str = self.join_list_of_str(paragraph_list, joined_chars= '..')
+                para_str = para_str.encode(errors='replace')
+                para_str = self.remove_whitespace_fr_raw(para_str)
+                
 
             print
             print title
@@ -92,10 +133,10 @@ class GoogleSearch(Spider):
                 for n in range(2): f.write('\n')
                 f.write(str(contents))
                 for n in range(2): f.write('\n')
+                if ENABLE_PARAGRAPH_STORED:
+                    f.write(para_str)
                 f.write('#'*20)
                 for n in range(2): f.write('\n')
-                print
-                print 'Write all data to file'
 
         print
         print 'Completed'
