@@ -14,11 +14,13 @@ Scrapy Spider Module to
     2) Scrape the individual links for the title and description.
 
 Updates:
+    Apr 17 2014: Cater for mutliple google search
     Apr 12 2014: Resolve issues with unrecognise character
                 : Add in join_list_of_str function and remove_whitespace_fr_raw
                 : Add in paragraph process
                 : Add in option to extract text from paragraph
 
+TODO: Enable injecting of some tag for xml collection
 
 '''
 
@@ -27,6 +29,7 @@ import os
 import sys
 import json
 import string
+import yaml
 from scrapy.spider import Spider
 from scrapy.selector import Selector
 from Python_Google_Search import gsearch_url_form_class 
@@ -45,6 +48,10 @@ class GoogleSearch(Spider):
     with open(RESULT_FILE,'w') as f:
         f.write('')
         print 'Restart the log file'
+
+    with open(GS_LINK_JSON_FILE,'w') as f:
+        f.write('')
+        print 'Restart the GS_LINK_JSON_FILE file'
 
     # for retrieving the settings from json file
     search_class = gsearch_url_form_class("")
@@ -72,7 +79,25 @@ class GoogleSearch(Spider):
         
         for n in ['\n','\t','\r']:
             raw_input = raw_input.replace(n,'')
-        return raw_input        
+        return raw_input
+
+    def combine_all_url_link_for_multiple_search(self,more_url_list):
+        '''
+            Combine all the url link list in the event of mutliple search.
+            list more_url_list --> none
+            get from Json file and eventually dump all back
+        '''
+        
+        with open(GS_LINK_JSON_FILE, "r") as outfile:
+            setting_data = yaml.load(outfile)
+
+        if setting_data is None or not setting_data.has_key('output_url'):
+            setting_data = dict()
+            setting_data['output_url'] = []
+
+        with open(GS_LINK_JSON_FILE, "w") as outfile:
+            json.dump({'output_url': setting_data['output_url']+more_url_list}, outfile, indent=4)
+        
 
 
     def parse(self, response):
@@ -97,8 +122,7 @@ class GoogleSearch(Spider):
                 print n
 
             ## Dump all results to file
-            with open(GS_LINK_JSON_FILE, "w") as outfile:
-                json.dump({'output_url':google_search_links_list}, outfile, indent=4)
+            self.combine_all_url_link_for_multiple_search(google_search_links_list)
 
         if self.setting_data['type_of_parse'] == 'general':
 
