@@ -29,7 +29,7 @@ Updates:
 TODO:
     Add in advanced google search
     http://www.johntedesco.net/blog/2012/06/21/how-to-solve-impossible-problems-daniel-russells-awesome-google-search-techniques/
-    expand to multiple keyword search
+    Time out when scraping --> some times scrape a lot of one website... need to cut down
 
 '''
 
@@ -270,14 +270,15 @@ if __name__ == '__main__':
 
     '''
     # User options
+    NUM_SEARCH_RESULTS = 10     # number of search results returned
     BYPASS_GOOGLE_SEARCH = 0    # if this is active, bypass searching
     NUM_RESULTS_TO_PROCESS = 30 # specify the number of results url to crawl
 
     print 'Start search'
     
     ## Parameters setting
-    search_words = 'best area to stay in tokyo'
-    search_words = ['best area to stay in tokyo','cheap place to stay in tokyo']
+    search_words = 'wiki tokyo'
+    #search_words = ['best area to stay in tokyo','cheap place to stay in tokyo']
     GS_LINK_JSON_FILE = r'C:\data\temp\output' #must be same as the get_google_link_results.py
 
     # spider store location, depend on user input
@@ -289,6 +290,7 @@ if __name__ == '__main__':
         print 'Get the google search results links'
         hh = gsearch_url_form_class(search_words)
         hh.data_format_switch = 1
+        hh.set_results_num_str(NUM_SEARCH_RESULTS)
         hh.formed_search_url()
         ## Set the setting for json
         temp_data_for_store = hh.prepare_data_for_json_store()
