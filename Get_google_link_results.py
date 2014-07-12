@@ -152,6 +152,9 @@ class GoogleSearch(Spider):
 
             ## Dump results to text file
             with open(RESULT_FILE,'a') as f:
+                f.write('\n')
+                f.write('#'*20)
+                f.write('\n')
                 f.write(title + '\n')
                 f.write(response.url)
                 for n in range(2): f.write('\n')
@@ -159,6 +162,7 @@ class GoogleSearch(Spider):
                 for n in range(2): f.write('\n')
                 if ENABLE_PARAGRAPH_STORED:
                     f.write(para_str)
+                f.write('\n')
                 f.write('#'*20)
                 for n in range(2): f.write('\n')
 
