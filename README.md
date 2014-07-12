@@ -10,3 +10,7 @@ Dependency of script are Scrapy and yaml (for unicode handling). Both can be dow
 Scripts is divided into 2 parts. The main script for running is from Python_Google_Search.py. The get_google_link_results.py is the scrapy spider for crawling either the google search page or individual websites. The switch depends on the json setting file created.
 
 More information can be obtained from: http://wp.me/p4nnkg-1i
+
+For the GUI version, required the following module: https://github.com/spidezad/Extract_specified_txt_fr_files
+See the docs folder for the GUI display.
+For more details on the GUI, pls see the 
