@@ -13,4 +13,4 @@ More information can be obtained from: http://wp.me/p4nnkg-1i
 
 For the GUI version, required the following module: https://github.com/spidezad/Extract_specified_txt_fr_files
 See the docs folder for the GUI display.
-For more details on the GUI, pls see the 
+For more details on the GUI, pls see the http://simplypython.wordpress.com/2014/07/12/scaping-google-results-using-python-gui-version/
