@@ -4,7 +4,7 @@
  Module to get google search results by using Scrapy
  Author: Tan Kok Hua (Guohua tan)
  Email: spider123@gmail.com
- Revised date: Apr 011 2014
+ Revised date: Jul 18 2014
 
 ##############################################
 
@@ -21,7 +21,8 @@ Required Modules:
     Scrapy --> for scraping website, make use of scrapy crawler
 
 Updates:
-    Apr 16 2014: re arrange the self.reformat_search_for_spaces function tot formed_individual_url function
+    Jul 17 2014: Rm set_results_num_str function as the result per page fixed to 100 per page.
+    Apr 16 2014: re arrange the self.reformat_search_for_spaces function to formed_individual_url function
                : Add in capability to handle multiple search items
     Apr 11 2014: Add in users parameters
     Apr 09 2014: Add in modify_search_key function
@@ -31,11 +32,18 @@ TODO:
     http://www.johntedesco.net/blog/2012/06/21/how-to-solve-impossible-problems-daniel-russells-awesome-google-search-techniques/
     Time out when scraping --> some times scrape a lot of one website... need to cut down
 
+    Handling mulitple search and mulitple page
+    if not enough search, need to filter off similar ones.
+
+BUGS:
+    If the total results from google is less than specified, it will loop over.
+
+LEARNING:
+    The "&start=101" will determine the page number.
+
 '''
 
-import re
-import os
-import sys
+import re, os, sys, math
 import json
 
 import yaml
@@ -45,8 +53,7 @@ from scrapy.selector import Selector
 
 class gsearch_url_form_class(object):
     '''
-        class for forming the url to be used in search
-        The following is temp format for google search
+        Class for constructing the url to be used in search.
     '''
     def __init__(self, google_search_keyword = '' ):
         '''
@@ -56,22 +63,17 @@ class gsearch_url_form_class(object):
                 if str will set to self.g_search_key
                 else set to self.g_search_key_list
 
-
-            #need to add the search item
-
             #ie - Sets the character encoding that is used to interpret the query string
             #oe - Sets the character encoding that is used to encode the results
             #aq -?
-            #num -1,10,100
+            #num -1,10,100 results displayed per page, default use 100 per page in this case.
             #client -- temp maintain to be firefox
 
-            #may need to turn off personalize search pws = 0
 
             TODO:
-            #need to add page num
             #with different agent --randomize this
             #take care of situation where the catchpa come out
-            
+            #may need to turn off personalize search pws = 0            
         '''
         
         if type(google_search_keyword) == str:
@@ -85,12 +87,15 @@ class gsearch_url_form_class(object):
             print 'google_search_keyword not of type str or list'
             raise
 
+        ## user defined parameters
+        self.search_results_num = 100 #set to any variable
+
+        ## url construct string text
         self.prefix_of_search_text = "https://www.google.com/search?q="
-        self.search_results_num = 100 #only 1,10,100
-        self.search_results_num_str = ''
-        self.postfix_of_search_text = '&ie=utf-8&oe=utf-8&aq=t&rls=org.mozilla:en-US:official&client=firefox-a&channel=fflb'# non changable text
-        self.output_url_str = ''
-        self.data_format_switch = 1
+        self.postfix_of_search_text = '&ie=utf-8&oe=utf-8&aq=t&rls=org.mozilla:en-US:official&client=firefox-a&channel=fflb&num=100'# non changable text
+
+        ## Type of crawler.
+        self.data_format_switch = 1 # 1 - google site crawler, 2 - individual site crawler
 
         #storage of the various parameters
         self.setting_json_file = r'c:\data\temp\google_search'
@@ -100,49 +105,37 @@ class gsearch_url_form_class(object):
     
 
     def reformat_search_for_spaces(self):
-        '''
-            call immediately at the initialization stages
+        """
+            Method call immediately at the initialization stages
             get rid of the spaces and replace by the "+"
-            None --> None
+            Use in search term. Eg: "Cookie fast" to "Cookie+fast"
+
             steps:
             strip any lagging spaces if present
             replace the self.g_search_key
-            
-
-        '''
+        """
         self.g_search_key = self.g_search_key.rstrip().replace(' ', '+')
 
-    def set_results_num_str(self, result_num):
-        '''
-            Function to set the number of results to the url str (temporary only for part of string)
-            number of results can only be  1,10,100
-            int results_num --> none
-            Any other number entered will reset the results to 100
-            have to set before the function format_search_url (TODO: defensive programming)
-        '''
-        if result_num not in [1,10,100]:
-            print 'Results specified need to be in 1, 10 or 100. Values set to 100 by default'
-            self.search_results_num = 100
+    def set_num_of_search_results(self, num_search):
+        """ Method to set the number of search results. Will be round in multiple of 100.
+            Args:
+                num_search (int): Number of search results to display. Must be int.
 
-        else:
-            self.search_results_num = result_num
+        """
+        assert num_search > 0
+        self.search_results_num = num_search
 
-        self.search_results_num_str = '&num=%i'%self.search_results_num
+    def calculate_num_page_to_scan(self):
+        """Calculate the num of page to scan, assume 100 results per page.
+           Based on user defined self.search_results_num.
+           Estimate the number of page needed to scan in multiple of hundred.
+
+        """
+        if self.search_results_num <1:
+            print "search results specified is not valid."
+            raise
         
-    ## !!!
-    def get_results_num_set(self):
-        '''
-          Return teh results number being set  
-
-        '''
-
-    ## !!!
-    def set_page_query_num(self, page_num):
-        '''
-            Display the results of page x specify by the page_num
-            int page_num --> none
-            modified the
-        '''
+        self.pages_to_scan = int(math.ceil(self.search_results_num/100.0))
 
     def modify_search_key(self, purpose):
         '''
@@ -167,6 +160,18 @@ class gsearch_url_form_class(object):
         else:
             return self.formed_multiple_search_url()
 
+    def formed_page_num(self, page_index):
+        """ Method to form part of the url where the page num is included.
+            Args:
+                page_num (int): page num in int to be formed. Will convert to multiple of 100.
+                for example page_index 1 will require "&start=100".
+                Start page begin with index 0
+            Returns:
+                (str): return part of the url.
+
+        """
+        return "&start=%i" %(page_index*100)
+
 
     def formed_individual_search_url(self):
         '''
@@ -177,17 +182,20 @@ class gsearch_url_form_class(object):
             also set to self.sp_search_url_list
             
         '''
+        ## scan the number of results needed
+        self.calculate_num_page_to_scan()
+        
+        ## convert the input search result
         self.reformat_search_for_spaces()
 
-        if self.search_results_num_str =='':
-            print 'seach output not being specified, Use default:100'
-            self.set_results_num_str(100)
-
-        self.output_url_str = self.prefix_of_search_text + self.g_search_key + self.search_results_num_str + self.postfix_of_search_text
-    
-        self.sp_search_url_list = [self.output_url_str]
+        self.sp_search_url_list = []
+        for n in range(0,self.pages_to_scan,1):
+            self.output_url_str = self.prefix_of_search_text + self.g_search_key + \
+                                  self.postfix_of_search_text +\
+                                  self.formed_page_num(n)
+            self.sp_search_url_list.append(self.output_url_str)
         
-        return  self.output_url_str
+        return  self.sp_search_url_list
 
     ## !!!
     def formed_multiple_search_url(self):
@@ -202,7 +210,7 @@ class gsearch_url_form_class(object):
         for n in self.g_search_key_list:
             ## set the individual key
             self.g_search_key = n
-            temp_url_list.append(self.formed_individual_search_url())
+            temp_url_list= temp_url_list + self.formed_individual_search_url()
 
         self.sp_search_url_list = temp_url_list
         return temp_url_list
@@ -270,14 +278,14 @@ if __name__ == '__main__':
 
     '''
     # User options
-    NUM_SEARCH_RESULTS = 10     # number of search results returned
+    NUM_SEARCH_RESULTS = 125    # number of search results returned
     BYPASS_GOOGLE_SEARCH = 0    # if this is active, bypass searching
-    NUM_RESULTS_TO_PROCESS = 30 # specify the number of results url to crawl
+    NUM_RESULTS_TO_PROCESS = 5 # specify the number of results url to crawl
 
     print 'Start search'
     
     ## Parameters setting
-    search_words = 'wiki tokyo'
+    search_words = 'tokyo go'
     #search_words = ['best area to stay in tokyo','cheap place to stay in tokyo']
     GS_LINK_JSON_FILE = r'C:\data\temp\output' #must be same as the get_google_link_results.py
 
@@ -289,9 +297,10 @@ if __name__ == '__main__':
     if not BYPASS_GOOGLE_SEARCH:
         print 'Get the google search results links'
         hh = gsearch_url_form_class(search_words)
+        hh.set_num_of_search_results(NUM_SEARCH_RESULTS)
         hh.data_format_switch = 1
-        hh.set_results_num_str(NUM_SEARCH_RESULTS)
         hh.formed_search_url()
+
         ## Set the setting for json
         temp_data_for_store = hh.prepare_data_for_json_store()
         hh.set_setting_to_json_file(temp_data_for_store)

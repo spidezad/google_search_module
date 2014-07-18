@@ -3,8 +3,8 @@
     Allow more easy viewing of results.
 
     TODO:
-    Add in menu to save the editor file
     Set limit to the page scroller
+    Input the multiple search options
 
     Learning:
         Trigger event\
